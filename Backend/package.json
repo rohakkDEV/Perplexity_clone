@@ -12,7 +12,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@langchain/google-genai": "^2.1.24",
+    "@langchain/google-genai": "^2.2.0",
     "@langchain/mistralai": "^1.0.7",
     "@tavily/core": "^0.7.2",
     "bcryptjs": "^3.0.3",
@@ -23,9 +23,9 @@
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
     "jsonwebtoken": "^9.0.3",
-    "langchain": "^1.2.30",
+    "langchain": "^1.5.3",
     "mongoose": "^9.2.4",
-    "morgan": "^1.10.1",
+    "morgan": "^1.11.0",
     "nodemailer": "^8.0.11",
     "socket.io": "^4.8.3",
     "zod": "^4.3.6"

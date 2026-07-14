@@ -1,7 +1,7 @@
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../services/mail.service.js";
-console.log("JWT_SECRET loaded:", process.env.JWT_SECRET);
+
 
 
 /**
