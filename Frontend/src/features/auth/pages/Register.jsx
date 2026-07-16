@@ -1,100 +1,89 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { useAuth } from '../hook/useAuth'
 import { useSelector } from 'react-redux'
+import { useAuth } from '../hook/useAuth'
+import AuthLayout from '../components/AuthLayout'
+import FormField from '../components/FormField'
 
 const Register = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
 
-  const { handleRegister } = useAuth()
   const error = useSelector(state => state.auth.error)
+  const { handleRegister } = useAuth()
   const navigate = useNavigate()
 
   const submitForm = async (event) => {
     event.preventDefault()
+    setSubmitting(true)
+    await handleRegister({ username, email, password })
+    setSubmitting(false)
+    setDone(true)
+  }
 
-    const payload = { username, email, password }
-
-    await handleRegister(payload)
-    navigate('/login')
+  if (done) {
+    return (
+      <AuthLayout eyebrow="Almost there" title="Check your inbox" subtitle="One more step">
+        <p className="text-sm leading-relaxed text-white/60">
+          We sent a verification link to <span className="text-white">{email}</span>. Click it to activate your account, then come back to sign in.
+        </p>
+        <button
+          onClick={() => navigate('/login')}
+          className="mt-6 w-full rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/5"
+        >
+          Go to login
+        </button>
+      </AuthLayout>
+    )
   }
 
   return (
-    <section className="min-h-screen bg-zinc-950 px-4 py-10 text-zinc-100 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[85vh] w-full max-w-5xl items-center justify-center">
-        <div className="w-full max-w-md rounded-2xl border border-[#31b8c6]/40 bg-zinc-900/70 p-8 shadow-2xl shadow-black/50 backdrop-blur">
-          <h1 className="text-3xl font-bold text-[#31b8c6]">
-            Create Account
-          </h1>
-          <p className="mt-2 text-sm text-zinc-300">
-            Register with your username, email, and password.
-          </p>
+    <AuthLayout
+      eyebrow="Get started"
+      title="Create your account"
+      subtitle="Register with your username, email, and password"
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-teal-300 hover:text-teal-200">Sign in</Link>
+        </>
+      }
+    >
+      <form onSubmit={submitForm} className="space-y-4">
+        <FormField
+          id="username" type="text" label="Username"
+          value={username} onChange={(e) => setUsername(e.target.value)}
+          placeholder="Choose a username" required
+        />
+        <FormField
+          id="email" type="email" label="Email"
+          value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com" required
+        />
+        <FormField
+          id="password" type="password" label="Password"
+          value={password} onChange={(e) => setPassword(e.target.value)}
+          placeholder="At least 6 characters" required minLength={6}
+        />
 
-          <form onSubmit={submitForm} className="mt-8 space-y-5">
-            <div>
-              <label htmlFor="username" className="mb-2 block text-sm font-medium text-zinc-200">
-                Username
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="Choose a username"
-                required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
-              />
-            </div>
+        {error && (
+          <div className="rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
-            <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-zinc-200">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium text-zinc-200">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Create a password"
-                required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-950/80 px-4 py-3 text-zinc-100 outline-none ring-0 transition focus:border-[#31b8c6] focus:shadow-[0_0_0_3px_rgba(49,184,198,0.25)]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-[#31b8c6] px-4 py-3 font-semibold text-zinc-950 transition hover:bg-[#45c7d4] focus:outline-none focus:shadow-[0_0_0_3px_rgba(49,184,198,0.35)]"
-            >
-              Register
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-zinc-300">
-            Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-[#31b8c6] transition hover:text-[#45c7d4]">
-              Login
-            </Link>
-          </p>
-        </div>
-      </div>
-    </section>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-teal-400 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-teal-300 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
+    </AuthLayout>
   )
 }
 

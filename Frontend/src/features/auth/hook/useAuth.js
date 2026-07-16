@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { register, login, getMe } from "../service/auth.api";
+import { register, login, getMe, logout, updateProfile, changePassword } from "../service/auth.api";
 import { setUser, setLoading, setError } from "../auth.slice";
 
 
@@ -42,11 +42,44 @@ export function useAuth() {
             dispatch(setLoading(false))
         }
     }
+    
 
+    async function handleLogout() {
+        try {
+            await logout()
+            dispatch(setUser(null))
+        } catch (err) {
+            dispatch(setError(err.response?.data?.message || "Logout failed"))
+        }
+    }
+
+    async function handleUpdateProfile({ username }) {
+        try {
+            const data = await updateProfile({ username })
+            dispatch(setUser(data.user))
+            return { success: true }
+        } catch (err) {
+            return { success: false, message: err.response?.data?.message || "Update failed" }
+        }
+    }
+
+    async function handleChangePassword({ currentPassword, newPassword }) {
+        try {
+            await changePassword({ currentPassword, newPassword })
+            return { success: true }
+        } catch (err) {
+            return { success: false, message: err.response?.data?.message || "Password change failed" }
+        }
+    }
+
+    
     return {
         handleRegister,
         handleLogin,
         handleGetMe,
+        handleLogout,
+        handleUpdateProfile,
+        handleChangePassword,
     }
 
 }

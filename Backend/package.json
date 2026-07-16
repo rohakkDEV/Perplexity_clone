@@ -14,7 +14,7 @@
   "dependencies": {
     "@langchain/google-genai": "^2.2.0",
     "@langchain/mistralai": "^1.2.0",
-    "@tavily/core": "^0.7.2",
+    "@tavily/core": "^0.7.6",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cord": "^1.0.1",
@@ -28,6 +28,6 @@
     "morgan": "^1.11.0",
     "nodemailer": "^8.0.11",
     "socket.io": "^4.8.3",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   }
 }

@@ -20,3 +20,18 @@ export async function getMe() {
     const response = await api.get("/api/auth/get-me")
     return response.data
 }
+
+export async function logout() {
+    const response = await api.post("/api/auth/logout")
+    return response.data
+}
+
+export async function updateProfile({ username }) {
+    const response = await api.patch("/api/auth/profile", { username })
+    return response.data
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+    const response = await api.patch("/api/auth/change-password", { currentPassword, newPassword })
+    return response.data
+}

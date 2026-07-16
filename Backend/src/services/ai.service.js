@@ -1,7 +1,9 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {ChatMistralAI} from "@langchain/mistralai"
-import {HumanMessage, SystemMessage,AIMessage} from "langchain"
+import {HumanMessage, SystemMessage,AIMessage,tool,createAgent} from "langchain"
 import { model } from "mongoose";
+import * as z from "zod";
+import { searchInternet } from "./internet.service.js";
 
 
 
@@ -15,17 +17,43 @@ const mistralModel = new ChatMistralAI({
     apiKey: process.env.MISTRAL_API_KEY
 })
 
+const searchInternetTool = tool(
+    searchInternet,
+    {
+        name: "searchInternet",
+        description: "Use this tool to get the latest information from the internet.",
+        schema: z.object({
+            query: z.string().describe("The search query to look up on the internet.")
+        })
+    }
+)
+
+const agent = createAgent({
+    model: mistralModel,
+    tools: [ searchInternetTool ],
+})
+
+
 export async function generateResponse(messages) {
-    const response = await geminiModel.invoke(messages.map(msg=>{
-        if(msg.role=="user")
-        {
-            return new HumanMessage(msg.content)
-        }else if(msg.role=="ai"){
-            return new AIMessage(msg.content)
-        }
-    }));
-    return response.text;
-    
+
+    const response = await agent.invoke({
+        messages: [
+            new SystemMessage(`
+                You are a helpful and precise assistant for answering questions.
+                If you don't know the answer, say you don't know. 
+                If the question requires up-to-date information, use the "searchInternet" tool to get the latest information from the internet and then answer based on the search results.
+            `),
+            ...(messages.map(msg => {
+                if (msg.role == "user") {
+                    return new HumanMessage(msg.content)
+                } else if (msg.role == "ai") {
+                    return new AIMessage(msg.content)
+                }
+            })) ]
+    });
+
+    return response.messages[ response.messages.length - 1 ].text;
+
 }
 
 export async function generateChatTitle(message) {
@@ -42,4 +70,45 @@ export async function generateChatTitle(message) {
     ])
 
     return response.text
+}
+
+export async function streamResponse(messages, { onToken, onSearching }) {
+    const stream = await agent.stream({
+        messages: [
+            new SystemMessage(`
+                You are a helpful and precise assistant for answering questions.
+                If you don't know the answer, say you don't know. 
+                If the question requires up-to-date information, use the "searchInternet" tool to get the latest information from the internet and then answer based on the search results.
+            `),
+            ...(messages.map(msg => {
+                if (msg.role == "user") return new HumanMessage(msg.content)
+                else if (msg.role == "ai") return new AIMessage(msg.content)
+            }))
+        ]
+    }, { streamMode: "messages" });
+
+    let fullText = "";
+    let announcedSearching = false;
+
+    for await (const [chunk] of stream) {
+        if (chunk?.tool_calls?.length > 0 || chunk?.tool_call_chunks?.length > 0) {
+            if (!announcedSearching) {
+                onSearching();
+                announcedSearching = true;
+            }
+            continue;
+        }
+
+       
+        if (chunk?.getType && chunk.getType() === "tool") {
+            continue;
+        }
+
+        if (chunk?.content && typeof chunk.content === "string") {
+            fullText += chunk.content;
+            onToken(chunk.content);
+        }
+    }
+
+    return fullText;
 }

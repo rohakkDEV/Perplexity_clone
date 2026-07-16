@@ -187,3 +187,83 @@ export async function verifyEmail(req, res) {
         })
     }
 }
+export async function logout(req, res) {
+    res.clearCookie("token");
+    res.status(200).json({
+        message: "Logged out successfully",
+        success: true
+    });
+}
+
+export async function updateProfile(req, res) {
+    const userId = req.user.id;
+    const { username } = req.body;
+
+    if (!username || !username.trim()) {
+        return res.status(400).json({
+            message: "Username is required",
+            success: false
+        });
+    }
+
+    const existingUser = await userModel.findOne({
+        username: username.trim(),
+        _id: { $ne: userId }
+    });
+
+    if (existingUser) {
+        return res.status(400).json({
+            message: "Username already taken",
+            success: false
+        });
+    }
+
+    const user = await userModel.findByIdAndUpdate(
+        userId,
+        { username: username.trim() },
+        { new: true }
+    ).select("-password");
+
+    res.status(200).json({
+        message: "Profile updated successfully",
+        success: true,
+        user
+    });
+}
+
+export async function changePassword(req, res) {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+            message: "Current and new password are required",
+            success: false
+        });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({
+            message: "New password must be at least 6 characters",
+            success: false
+        });
+    }
+
+    const user = await userModel.findById(userId);
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+        return res.status(400).json({
+            message: "Current password is incorrect",
+            success: false
+        });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+        message: "Password changed successfully",
+        success: true
+    });
+}

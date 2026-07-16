@@ -23,5 +23,9 @@ app.get("/",(req,res)=>{
 
 app.use("/api/auth", authRouter)
 app.use("/api/chats", chatRouter)
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ success: false, message: "Something went wrong" });
+});
 
 export default app;
